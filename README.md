@@ -63,7 +63,7 @@ pip install vwrapper
 Or from source:
 
 ```bash
-git clone https://github.com/yourusername/vwrapper.git
+git clone https://github.com/patelpa1639/vwrapper.git
 cd vwrapper
 pip install -e .
 ```
@@ -189,7 +189,7 @@ src/vwrapper/
 ## Development
 
 ```bash
-git clone https://github.com/yourusername/vwrapper.git
+git clone https://github.com/patelpa1639/vwrapper.git
 cd vwrapper
 pip install -e ".[dev]"
 pytest

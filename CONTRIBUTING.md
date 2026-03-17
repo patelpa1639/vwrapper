@@ -5,7 +5,7 @@ Thanks for your interest in contributing! vWrapper is an early-stage project and
 ## Getting Started
 
 ```bash
-git clone https://github.com/yourusername/vwrapper.git
+git clone https://github.com/patelpa1639/vwrapper.git
 cd vwrapper
 pip install -e ".[dev]"
 ```
