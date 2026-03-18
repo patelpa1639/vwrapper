@@ -30,7 +30,7 @@ def default(
         return
 
     # Typer quirk: subcommand names get captured as query arg
-    _subcommands = {"demo", "status", "version"}
+    _subcommands = {"demo", "sandbox", "status", "version"}
     if query in _subcommands:
         ctx.invoke(globals()[query])
         return
@@ -153,8 +153,15 @@ def _execute(
 
 
 @app.command()
+def sandbox() -> None:
+    """Launch interactive REPL with fake data — no vCenter required."""
+    from vwrapper.repl import start_repl
+    start_repl(demo=True)
+
+
+@app.command()
 def demo() -> None:
-    """Run a demo with fake data — no vCenter required."""
+    """Run a non-interactive demo showcasing all features."""
     import time
 
     from vwrapper.models.actions import Action, ActionResult, VMInfo

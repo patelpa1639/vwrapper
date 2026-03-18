@@ -45,12 +45,14 @@ $ vwrapper "list all my VMs"
 
 ## Features
 
+- **Interactive REPL** — just type `vwrapper` and drop into a Claude Code-style session
 - **Natural language** — just describe what you want in plain English
 - **AI-powered intent parsing** — uses Claude or GPT to understand your request
 - **Guardrails** — destructive actions are blocked, dangerous ones require confirmation
 - **Dry-run mode** — see what would happen before it happens
 - **Infrastructure insights** — ask questions about capacity, health, and performance
-- **Rich terminal UI** — colored output, tables, and panels via [Rich](https://github.com/Textualize/rich)
+- **Rich terminal UI** — colored output, tables, spinners, and panels via [Rich](https://github.com/Textualize/rich)
+- **Works with standalone ESXi** — no vCenter required for development
 
 ## Quick Start
 
@@ -89,6 +91,41 @@ LLM_API_KEY=sk-ant-...
 
 ### Use
 
+#### Interactive mode (recommended)
+
+Just type `vwrapper` to drop into an interactive session — like Claude Code, but for infrastructure:
+
+```bash
+$ vwrapper
+
+  ╭──────────────────────────────────────────────╮
+  │  vWrapper v0.1.0                             │
+  │                                              │
+  │  Connected to 192.168.86.52 (ESXi 8.0U3g)   │
+  │  LLM: claude-haiku-4-5-20251001             │
+  │                                              │
+  │  Type natural language commands to manage    │
+  │  your infrastructure.                        │
+  │  Type /help for commands, /exit to quit.     │
+  ╰──────────────────────────────────────────────╯
+
+  > show me all my VMs
+  ⠋ Fetching VMs...
+  [rich table output]
+
+  > create a dev box with 4 CPUs
+  [confirmation prompt → creates VM]
+
+  > is my cluster running hot?
+  [AI-powered insight panel]
+
+  > /exit
+```
+
+Slash commands in interactive mode: `/help`, `/status`, `/vms`, `/clear`, `/history`, `/exit`.
+
+#### One-shot mode
+
 ```bash
 # List VMs
 vwrapper "show me all VMs"
@@ -107,6 +144,14 @@ vwrapper "spin up a dev box" --yes
 
 # Check vCenter connectivity
 vwrapper status
+```
+
+#### Demo mode
+
+See the UI in action without any vCenter connection:
+
+```bash
+vwrapper demo
 ```
 
 ## How It Works
@@ -172,7 +217,8 @@ All config is via environment variables (or a `.env` file):
 
 ```
 src/vwrapper/
-├── cli.py              # Typer CLI entrypoint
+├── cli.py              # Typer CLI entrypoint + demo command
+├── repl.py             # Interactive REPL (Claude Code-style session)
 ├── config.py           # Pydantic settings & env loading
 ├── output.py           # Rich terminal output (tables, panels)
 ├── agent/
@@ -183,7 +229,7 @@ src/vwrapper/
 ├── models/
 │   └── actions.py      # Pydantic models (Action, VMInfo, etc.)
 └── providers/
-    └── vmware.py       # pyvmomi vCenter provider
+    └── vmware.py       # pyvmomi vCenter/ESXi provider
 ```
 
 ## Development
@@ -200,7 +246,7 @@ pytest
 - [ ] `power_on` / `power_off` / `restart` VM actions
 - [ ] Snapshot management
 - [ ] Multi-cluster support
-- [ ] Interactive mode (REPL)
+- [x] Interactive mode (REPL)
 - [ ] Plugin system for custom providers
 - [ ] MCP server integration
 

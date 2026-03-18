@@ -220,28 +220,38 @@ def _execute_query(
 
 # ── REPL entry point ────────────────────────────────────────────
 
-def start_repl() -> None:
-    """Launch the interactive vWrapper REPL."""
+def start_repl(*, demo: bool = False) -> None:
+    """Launch the interactive vWrapper REPL.
+
+    Args:
+        demo: If True, use a fake provider with simulated data instead of
+              connecting to a real vCenter/ESXi host.
+    """
     config = get_config()
 
-    # Connect
-    from vwrapper.providers.vmware import VMwareProvider
+    if demo:
+        from vwrapper.providers.fake import FakeProvider
 
-    provider = VMwareProvider(config.vcenter)
-
-    try:
+        provider = FakeProvider()
         _with_spinner("Connecting to vCenter...", provider.connect)
-    except Exception as e:
-        console.print(f"\n  [red]Failed to connect:[/red] {e}")
-        console.print(f"  [dim]Check your .env config and try again.[/dim]\n")
-        sys.exit(1)
+        host_info = "demo mode — fake data"
+    else:
+        from vwrapper.providers.vmware import VMwareProvider
 
-    # Get host info
-    try:
-        about = provider.content.about
-        host_info = f"{about.fullName}"
-    except Exception:
-        host_info = ""
+        provider = VMwareProvider(config.vcenter)
+
+        try:
+            _with_spinner("Connecting to vCenter...", provider.connect)
+        except Exception as e:
+            console.print(f"\n  [red]Failed to connect:[/red] {e}")
+            console.print(f"  [dim]Check your .env config and try again.[/dim]\n")
+            sys.exit(1)
+
+        try:
+            about = provider.content.about
+            host_info = f"{about.fullName}"
+        except Exception:
+            host_info = ""
 
     _print_banner(config, host_info)
 
