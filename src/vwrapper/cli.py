@@ -29,6 +29,12 @@ def default(
     if ctx.invoked_subcommand is not None:
         return
 
+    # Typer quirk: subcommand names get captured as query arg
+    _subcommands = {"demo", "status", "version"}
+    if query in _subcommands:
+        ctx.invoke(globals()[query])
+        return
+
     # No query and no subcommand → show help
     if query is None:
         console.print(ctx.get_help())
@@ -143,6 +149,99 @@ def _execute(
         raise typer.Exit(1)
     finally:
         provider.disconnect()
+
+
+@app.command()
+def demo() -> None:
+    """Run a demo with fake data — no vCenter required."""
+    import time
+
+    from vwrapper.models.actions import Action, ActionResult, VMInfo
+    from vwrapper.output import (
+        print_action_plan,
+        print_blocked,
+        print_insight,
+        print_result,
+        print_step,
+        print_vm_table,
+    )
+
+    fake_vms = [
+        VMInfo(name="web-01", power_state="poweredOn", cpu=4, memory_mb=8192, guest_os="Ubuntu 22.04 (64-bit)", ip_address="10.0.1.10"),
+        VMInfo(name="db-01", power_state="poweredOn", cpu=8, memory_mb=16384, guest_os="CentOS 9 (64-bit)", ip_address="10.0.1.20"),
+        VMInfo(name="api-gateway", power_state="poweredOn", cpu=2, memory_mb=4096, guest_os="Alpine Linux (64-bit)", ip_address="10.0.1.30"),
+        VMInfo(name="ml-worker-01", power_state="poweredOff", cpu=16, memory_mb=65536, guest_os="Ubuntu 22.04 (64-bit)", ip_address=None),
+        VMInfo(name="dev-box", power_state="poweredOff", cpu=2, memory_mb=4096, guest_os="Other Linux (64-bit)", ip_address=None),
+    ]
+
+    # --- Demo 1: List VMs ---
+    console.print("\n[bold dim]━━━ Demo 1: List VMs ━━━[/bold dim]\n")
+    console.print('  [dim]$ vwrapper "show me all my VMs"[/dim]\n')
+    time.sleep(0.3)
+    print_step("\U0001f9e0", "[bold]Parsing intent...[/bold]")
+    time.sleep(0.5)
+    print_step("\U0001f50c", "[bold]Connecting to vCenter...[/bold]")
+    time.sleep(0.3)
+    print_step("\U0001f512", "[bold]Validating...[/bold]")
+    time.sleep(0.2)
+    print_step("\u2699\ufe0f", "[bold]Executing...[/bold]")
+    time.sleep(0.3)
+    console.print()
+    print_vm_table(fake_vms)
+
+    # --- Demo 2: Create VM ---
+    console.print("\n[bold dim]━━━ Demo 2: Create VM ━━━[/bold dim]\n")
+    console.print('  [dim]$ vwrapper "spin up a 4-cpu dev box called test-api" --yes[/dim]\n')
+    time.sleep(0.3)
+    print_step("\U0001f9e0", "[bold]Parsing intent...[/bold]")
+    time.sleep(0.5)
+    action = Action(name="create_vm", params={"name": "test-api", "cpu": 4, "memory_mb": 8192, "disk_gb": 40}, raw_query="spin up a 4-cpu dev box called test-api")
+    print_action_plan(action)
+    time.sleep(0.3)
+    print_step("\U0001f50c", "[bold]Connecting to vCenter...[/bold]")
+    time.sleep(0.3)
+    print_step("\U0001f512", "[bold]Validating...[/bold]")
+    time.sleep(0.2)
+    print_step("\u2699\ufe0f", "[bold]Executing...[/bold]")
+    time.sleep(0.5)
+    console.print()
+    print_result(ActionResult(success=True, action="create_vm", data={"name": "test-api", "cpu": 4, "memory_mb": 8192, "disk_gb": 40}))
+
+    # --- Demo 3: Insight ---
+    console.print("\n[bold dim]━━━ Demo 3: Infrastructure Insight ━━━[/bold dim]\n")
+    console.print('  [dim]$ vwrapper "is my cluster running hot?"[/dim]\n')
+    time.sleep(0.3)
+    print_step("\U0001f9e0", "[bold]Parsing intent...[/bold]")
+    time.sleep(0.5)
+    print_step("\U0001f50c", "[bold]Connecting to vCenter...[/bold]")
+    time.sleep(0.3)
+    print_step("\U0001f512", "[bold]Validating...[/bold]")
+    time.sleep(0.2)
+    print_step("\u2699\ufe0f", "[bold]Executing...[/bold]")
+    time.sleep(0.5)
+    console.print()
+    print_insight(
+        "## Cluster Health Summary\n\n"
+        "Your cluster is **not running hot** — resource usage is moderate.\n\n"
+        "- **CPU**: 32% utilized (2,840 MHz of 8,800 MHz)\n"
+        "- **Memory**: 58% utilized (56.2 GB of 96.0 GB)\n"
+        "- **VMs**: 5 total (3 powered on, 2 powered off)\n\n"
+        "The ML worker (`ml-worker-01`) is powered off — if you start it, "
+        "memory will jump to ~92%. Consider adding capacity before powering it on."
+    )
+
+    # --- Demo 4: Guardrail block ---
+    console.print("\n[bold dim]━━━ Demo 4: Guardrail Block ━━━[/bold dim]\n")
+    console.print('  [dim]$ vwrapper "delete all VMs"[/dim]\n')
+    time.sleep(0.3)
+    print_step("\U0001f9e0", "[bold]Parsing intent...[/bold]")
+    time.sleep(0.5)
+    print_step("\U0001f50c", "[bold]Connecting to vCenter...[/bold]")
+    time.sleep(0.3)
+    print_step("\U0001f512", "[bold]Validating...[/bold]")
+    time.sleep(0.3)
+    print_blocked("Action 'delete_vm' is permanently blocked. Destructive operations are not allowed.")
+    console.print()
 
 
 @app.command()

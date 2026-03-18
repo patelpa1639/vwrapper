@@ -80,6 +80,17 @@ class VMwareProvider:
     def vm_count(self) -> int:
         return len(self.list_vms())
 
+    def _get_dc_and_pool(self) -> tuple:
+        """Get datacenter, resource pool, and datastore.
+
+        Works with both standalone ESXi hosts and vCenter-managed clusters.
+        """
+        dc = self.content.rootFolder.childEntity[0]
+        compute = dc.hostFolder.childEntity[0]
+        resource_pool = compute.resourcePool
+        datastore = dc.datastoreFolder.childEntity[0]
+        return dc, resource_pool, datastore
+
     def create_vm(
         self,
         name: str,
@@ -87,11 +98,7 @@ class VMwareProvider:
         memory_mb: int = 4096,
         disk_gb: int = 40,
     ) -> ActionResult:
-        # Find the default datacenter, cluster, datastore, resource pool
-        dc = self.content.rootFolder.childEntity[0]
-        cluster = dc.hostFolder.childEntity[0]
-        resource_pool = cluster.resourcePool
-        datastore = dc.datastoreFolder.childEntity[0]
+        dc, resource_pool, datastore = self._get_dc_and_pool()
 
         # VM config spec
         vm_folder = dc.vmFolder
@@ -139,16 +146,16 @@ class VMwareProvider:
         )
 
     def get_capacity(self) -> dict:
-        """Fetch cluster-level capacity summary."""
+        """Fetch host/cluster-level capacity summary."""
         dc = self.content.rootFolder.childEntity[0]
-        cluster = dc.hostFolder.childEntity[0]
+        compute = dc.hostFolder.childEntity[0]
 
         total_cpu_mhz = 0
         total_memory_bytes = 0
         used_cpu_mhz = 0
         used_memory_bytes = 0
 
-        for host in cluster.host:
+        for host in compute.host:
             total_cpu_mhz += host.summary.hardware.cpuMhz * host.summary.hardware.numCpuCores
             total_memory_bytes += host.summary.hardware.memorySize
             used_cpu_mhz += host.summary.quickStats.overallCpuUsage
@@ -161,7 +168,7 @@ class VMwareProvider:
             "total_memory_gb": round(total_memory_bytes / (1024**3), 1),
             "used_memory_gb": round(used_memory_bytes / (1024**3), 1),
             "memory_percent": round(used_memory_bytes / total_memory_bytes * 100, 1) if total_memory_bytes else 0,
-            "host_count": len(cluster.host),
+            "host_count": len(compute.host),
             "vm_count": self.vm_count(),
         }
 
