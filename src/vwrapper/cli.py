@@ -35,9 +35,10 @@ def default(
         ctx.invoke(globals()[query])
         return
 
-    # No query and no subcommand → show help
+    # No query → launch interactive REPL
     if query is None:
-        console.print(ctx.get_help())
+        from vwrapper.repl import start_repl
+        start_repl()
         return
 
     _execute(query, dry_run=dry_run, yes=yes, verbose=verbose)
