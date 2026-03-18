@@ -7,7 +7,7 @@ name = "vwrapper"
 version = "0.1.0"
 description = "AI-powered VMware infrastructure control from the CLI."
 readme = "README.md"
-license = "Apache-2.0"
+license = {text = "Apache-2.0"}
 requires-python = ">=3.11"
 keywords = ["vmware", "vcenter", "cli", "ai", "infrastructure", "llm", "devops"]
 classifiers = [
